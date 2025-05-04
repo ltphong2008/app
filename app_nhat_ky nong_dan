@@ -1,0 +1,66 @@
+// App nhật ký nông dân ghi bằng giọng nói (React Native)
+import React, { useState } from 'react';
+import { View, Text, Button, TextInput, FlatList } from 'react-native';
+import Voice from '@react-native-voice/voice';
+
+export default function App() {
+  const [recording, setRecording] = useState(false);
+  const [entries, setEntries] = useState([]);
+  const [text, setText] = useState('');
+
+  const startRecording = async () => {
+    setText('');
+    setRecording(true);
+    Voice.onSpeechResults = (result) => {
+      setText(result.value[0]);
+    };
+    await Voice.start('vi-VN');
+  };
+
+  const stopRecording = async () => {
+    setRecording(false);
+    await Voice.stop();
+  };
+
+  const saveEntry = () => {
+    const newEntry = {
+      id: Date.now().toString(),
+      text: text,
+      date: new Date().toLocaleString(),
+    };
+    setEntries([newEntry, ...entries]);
+    setText('');
+  };
+
+  return (
+    <View style={{ padding: 20 }}>
+      <Text style={{ fontSize: 20, marginBottom: 10 }}>Nhật ký nông dân</Text>
+
+      <Button
+        title={recording ? 'Đang ghi...' : 'Ghi giọng nói'}
+        onPress={recording ? stopRecording : startRecording}
+      />
+
+      <TextInput
+        value={text}
+        onChangeText={setText}
+        placeholder="Nội dung nhật ký"
+        style={{ borderWidth: 1, padding: 10, marginVertical: 10 }}
+        multiline
+      />
+
+      <Button title="Lưu nhật ký" onPress={saveEntry} disabled={!text} />
+
+      <FlatList
+        data={entries}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={{ marginTop: 10 }}>
+            <Text style={{ fontWeight: 'bold' }}>{item.date}</Text>
+            <Text>{item.text}</Text>
+          </View>
+        )}
+      />
+    </View>
+  );
+}
